@@ -196,8 +196,26 @@ function add_line($gd, $x0, $y0, $x1, $y1, $scale, $color, $width, $height) {
 }
 
 function draw_axis($gd, $width, $hegiht, $color) {
-	imageline($gd, $width / 2, 0, $width/2, $hegiht, $color);
-	imageline($gd, 0, $hegiht / 2, $width, $hegiht / 2, $color);
+	$arrow = new GDArrow();
+	$arrow -> image = $gd;
+	$arrow -> color = $color;
+	$arrow -> x1 = 0;
+	$arrow -> y1 = $hegiht /2;
+	$arrow -> x2 = $width;
+	$arrow -> y2 = $hegiht / 2;
+	$arrow -> angle = 25;
+	$arrow -> radius = 12;
+	$arrow -> drawGDArrow();
+	$arrow = new GDArrow();
+	$arrow -> image = $gd;
+	$arrow -> color = $color;
+	$arrow -> x2 = $width /2 ;
+	$arrow -> y2 = 0;
+	$arrow -> x1 = $width /2 ;
+	$arrow -> y1 = $hegiht;
+	$arrow -> angle = 25;
+	$arrow -> radius = 12;
+	$arrow -> drawGDArrow();
 }
 
 function draw_center($gd, $x, $y, $color, $scale, $width, $height) {
@@ -207,11 +225,20 @@ function draw_center($gd, $x, $y, $color, $scale, $width, $height) {
 function draw_arrow_to_center($gd, $x0, $y0, $color, $scale, $width, $height, $len) {
 	$xr = $scale * $x0 + $width / 2;
 	$yr = $height / 2 - $scale * $y0;
-	$tan = $xr / $yr;
-	$al = atan($tan);
-	$x1r = $len * cos( pi() / 2 + $al) + $width / 2;
-	$y1r = $height / 2 - $scale *$len * sin(pi() / 2 + $al);
-	imageline($gd, $xr, $yr, $x1r, $y1r, $color);
+	$lenr = sqrt($xr * $xr + $yr * $yr);
+	$la =  ($lenr - $len) / $len;
+	$x = $la * $xr / ( 1 + $la);
+	$y = $la * $yr / ( 1 + $la); 
+	$arrow = new GDArrow();
+	$arrow -> image = $gd;
+	$arrow -> color = $color;
+	$arrow -> x1 = $xr;
+	$arrow -> y1 = $yr;
+	$arrow -> x2 = $x;
+	$arrow -> y2 = $y;
+	$arrow -> angle = 25;
+	$arrow -> radius = 12;
+	$arrow -> drawGDArrow();
 }
 $host = "127.0.0.1";
 $user = "root";
@@ -244,16 +271,6 @@ $white = imagecolorallocate($gd, 255,255,255);
 $red = imagecolorallocate($gd, 255, 0, 0);
 $black = imagecolorallocate($gd, 0, 0, 0);
 draw_axis($gd, $width, $height, $black);
-$arrow = new GDArrow();
-$arrow -> image = $gd;
-$arrow -> color = $black;
-$arrow -> x1 = 0;
-$arrow -> y1 = 0;
-$arrow -> x2 = 140;
-$arrow -> y2 = 100;
-$arrow -> angle = 25;
-$arrow -> radius = 12;
-$arrow -> drawGDArrow();
 //imageline($gd, 0, 0, 20, 20, $red);
 //imagesetpixel($gd, 200, 200, $red);
 $i = 0;
@@ -261,18 +278,19 @@ foreach($el as $e) {
 	add_line($gd, $no[$e[0]][0], $no[$e[0]][1], $no[$e[1]][0], $no[$e[1]][1], $scale, $red, $width, $height);
 	add_line($gd, $no[$e[1]][0], $no[$e[1]][1], $no[$e[2]][0], $no[$e[2]][1], $scale, $red, $width, $height);
 	add_line($gd, $no[$e[0]][0], $no[$e[0]][1], $no[$e[2]][0], $no[$e[2]][1], $scale, $red, $width, $height);
-	$xc = ($no[$e[0]][0] + $no[$e[1]][0] + $no[$e[2]][0]) / 3;
+	$xc1 = ($no[$e[0]][0] + $no[$e[1]][0] + $no[$e[2]][0] + 1.5 * $width) / 3;
+	$yc1 =  ($no[$e[0]][1] + $no[$e[1]][1] + $no[$e[2]][1] - 1.5 * $height) / 3;
+	$xc = ($no[$e[0]][0] + $no[$e[1]][0] + $no[$e[2]][0] ) / 3;
 	$yc =  ($no[$e[0]][1] + $no[$e[1]][1] + $no[$e[2]][1]) / 3;
-	$len = sqrt($xc * $xc + $yc * $yc);
+	$len = sqrt($xc1 * $xc1 + $yc1 * $yc1);
 	if ($len > $max_len) {
 		$max_len = $len;
 	}
 	draw_center($gd, $xc , $yc, $black, $scale, $width, $height); 
 	$le[] = array($xc, $yc, $len);
 }
-
 foreach($le as $l) {
-	draw_arrow_to_center($gd, $l[0], $l[1], $black, $scale, $width, $height, $l[2] / $max_len * 200);
+draw_arrow_to_center($gd, $l[0], $l[1], $black, $scale, $width, $height, $l[2] / $max_len * 200);
 }
 header("Content-Type: image/png");
 imagepng($gd); 
